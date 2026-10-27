@@ -10,12 +10,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.athot.ecommerce_fruits.dto.ProductResponse;
 import com.athot.ecommerce_fruits.model.Product;
 import com.athot.ecommerce_fruits.service.ProductService;
-
+import org.springframework.http.MediaType; 
 @RestController
 @RequestMapping("/api")
 public class ProductController {
@@ -25,10 +27,17 @@ public class ProductController {
     private ProductService service;
 
 
-    @PostMapping("/products")
-    public  Product createProducts(@RequestBody Product product){
-        return service.createProducts(product);
-    }
+   @PostMapping(
+    value = "/products",
+    consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+)
+public Product createProducts(
+        @RequestPart("product") Product product,
+        @RequestPart("image") MultipartFile image
+) throws Exception {
+
+    return service.createProducts(product, image);
+}
     // create method which will release list of the product
     @GetMapping("/products")
     public List<ProductResponse> getAllProducts(){

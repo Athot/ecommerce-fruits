@@ -19,6 +19,8 @@ const emptyForm = {
 
 export default function UploadProduct() {
   const [form, setForm] = useState(emptyForm);
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [open, setOpen] = useState(false);
   const [activePage, setActivePage] = useState("Products");
   const [error, setError] = useState("");
@@ -39,9 +41,7 @@ export default function UploadProduct() {
   }, []);
   const fetchAllCategory = async () => {
     const data = await getAllCategory(token);
-    debugger;
     if (data) {
-      console.log(data);
       setFilteredCategories(data);
     }
   };
@@ -50,6 +50,12 @@ export default function UploadProduct() {
     setError("");
 
     try {
+      // if we want to send with the id
+      // const selectedCategory = filteredCategories.find(
+      //   (category) => String(category.id) === String(form.categoryId),
+      // );
+      console.log(filteredCategories);
+      // if we want to send with the name
       const selectedCategory = filteredCategories.find(
         (category) => String(category.id) === String(form.categoryId),
       );
@@ -59,18 +65,44 @@ export default function UploadProduct() {
         return;
       }
 
+      if (!selectedCategory) {
+        setError("Please select a valid category.");
+        return;
+      }
+
+      if (images.length === 0) {
+        setError("Please select at least one product image.");
+        return;
+      }
+
       const payload = {
         ...form,
         price: Number(form.price),
         quantity: Number(form.quantity),
         category: {
           id: selectedCategory.id,
+          // name: selectedCategory.name,
         },
       };
 
+      // create multiple form data
+      const formData = new FormData();
+
+      // send product details as JSON
+      formData.append(
+        "product",
+        new Blob([JSON.stringify(payload)], {
+          type: "application/json",
+        }),
+      );
+
+      // sebd the actual image file separately
+      images.forEach((img) => {
+        formData.append("image", img);
+      });
       console.log("Product payload:", payload);
 
-      const res = await uploadProduct(payload, token);
+      const res = await uploadProduct(formData, token);
 
       if (res) {
         alert("Product uploaded successfully!");
@@ -198,6 +230,76 @@ export default function UploadProduct() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* image */}
+            {/* this is for uploading only small image */}
+            {/* <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Upload Image *
+              </label>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+
+                  if (file) {
+                    setImage(file);
+                    setImagePreview(URL.createObjectURL(file));
+                  }
+                }}
+                className="w-full rounded-lg border border-gray-300 p-3"
+              />
+
+              {imagePreview && (
+                <img
+                  src={imagePreview}
+                  alt="Product preview"
+                  className="mt-4 h-40 w-40 rounded-lg border object-cover"
+                />
+              )}
+            </div> */}
+            {/* if we want to upload multiple image */}
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Upload Product Images *
+              </label>
+
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+
+                  setImages(files);
+
+                  setImagePreviews((previous) => {
+                    previous.forEach((url) => URL.revokeObjectURL(url));
+                    return files.map((file) => URL.createObjectURL(file));
+                  });
+                }}
+                className="w-full rounded-lg border border-gray-300 p-3"
+              />
+
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                {imagePreviews.map((preview, index) => (
+                  <div key={preview} className="relative">
+                    <img
+                      src={preview}
+                      alt={`Product preview ${index + 1}`}
+                      className="h-40 w-full rounded-lg border object-cover"
+                    />
+
+                    <p className="mt-1 truncate text-xs text-gray-500">
+                      {images[index]?.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Release Date and Quantity */}

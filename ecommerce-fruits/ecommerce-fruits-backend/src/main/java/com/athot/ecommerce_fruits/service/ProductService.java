@@ -1,9 +1,15 @@
 package com.athot.ecommerce_fruits.service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.athot.ecommerce_fruits.dto.ProductResponse;
 import com.athot.ecommerce_fruits.exception.ProductNotFoundException;
@@ -16,7 +22,35 @@ public class ProductService {
     private ProductRepo repo;
 
 
-    public Product createProducts(Product product){
+    public Product createProducts(Product product, MultipartFile image) throws Exception{
+        
+        if(image != null && !image.isEmpty()){
+            String fileName = UUID.randomUUID() + "_" + image.getOriginalFilename();
+
+
+        Path uploadPath = Paths.get("uploads/products")
+                .toAbsolutePath()
+                .normalize();
+
+        Files.createDirectories(uploadPath);
+
+        Path filePath = uploadPath.resolve(fileName).normalize();
+
+        if (!filePath.startsWith(uploadPath)) {
+            throw new IllegalArgumentException("Invalid file path");
+        }
+
+        Files.copy(
+                image.getInputStream(),
+                filePath,
+                StandardCopyOption.REPLACE_EXISTING
+        );
+
+        product.setImageUrl("/uploads/products/" + fileName);
+    }
+
+        
+        
         return repo.save(product);
     }
         public List<ProductResponse> getAllProduct() {
@@ -33,6 +67,9 @@ public class ProductService {
         response.setDescription(product.getDescription());
         response.setBrand(product.getBrand());
         response.setPrice(product.getPrice());
+
+        // image url
+        response.setImageUrl(product.getImageUrl());
 
         response.setCategoryId(product.getCategory().getId());
         response.setCategoryName(product.getCategory().getName());

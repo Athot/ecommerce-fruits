@@ -1,8 +1,13 @@
+# Node.js dependencies
+node_modules/
+**/node_modules/
+
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
 
 ### STS ###
 .apt_generated
@@ -31,3 +36,40 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+
+
+# Build outputs
+target/
+**/target/
+dist/
+**/dist/
+build/
+**/build/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploaded files
+ecommerce-fruits-backend/uploads/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Java compiled files
+*.class
+
+# Temporary files
+*.tmp
+*.swp
+

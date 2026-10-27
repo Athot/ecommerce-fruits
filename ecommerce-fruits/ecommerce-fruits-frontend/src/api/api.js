@@ -43,6 +43,7 @@ export const getAllCategory = async (token) => {
 export const uploadProduct = async (data, token) => {
   try {
     debugger;
+    console.log(data);
     const res = await axios.post(`${BASE_URL}/products`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
