@@ -206,7 +206,7 @@ export default function ProductScreen() {
           <div>
             <h2 className="font-bold text-gray-900">All Categories</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Manage your store's product categories.
+              Manage your store's product.
             </p>
           </div>
 
@@ -224,10 +224,10 @@ export default function ProductScreen() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[650px] text-left">
+          <table className="w-full min-w-162.5 text-left">
             <thead className="bg-gray-50">
               <tr className="text-xs uppercase tracking-wider text-gray-500">
-                <th className="px-5 py-4 font-semibold">Category</th>
+                <th className="px-5 py-4 font-semibold">Product ID</th>
                 <th className="px-5 py-4 font-semibold">Description</th>
                 <th className="px-5 py-4 font-semibold">Status</th>
                 <th className="px-5 py-4 text-right font-semibold">Actions</th>
@@ -328,7 +328,7 @@ export default function ProductScreen() {
       {/* Add/Edit modal */}
       {showForm && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/40 p-4"
+          className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) closeForm();
           }}
@@ -345,7 +345,7 @@ export default function ProductScreen() {
                   id="category-form-title"
                   className="text-xl font-bold text-gray-900"
                 >
-                  {editingId !== null ? "Edit Category" : "Add Category"}
+                  {editingId !== null ? "Edits Category" : "Add Category"}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
                   Enter the category information below.

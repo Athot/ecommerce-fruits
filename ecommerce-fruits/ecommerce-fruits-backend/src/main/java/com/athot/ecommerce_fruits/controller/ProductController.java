@@ -1,7 +1,5 @@
 package com.athot.ecommerce_fruits.controller;
-
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,10 +31,10 @@ public class ProductController {
 )
 public Product createProducts(
         @RequestPart("product") Product product,
-        @RequestPart("image") MultipartFile image
+        @RequestPart("images") List<MultipartFile> images
 ) throws Exception {
 
-    return service.createProducts(product, image);
+    return service.createProducts(product, images);
 }
     // create method which will release list of the product
     @GetMapping("/products")
@@ -46,7 +44,7 @@ public Product createProducts(
 
     // get the product by id
     @GetMapping("/products/{id}")
-    public Product getProductById(@PathVariable int id) {
+    public ProductResponse getProductById(@PathVariable int id) {
         return service.getProductsById(id);
     }
 

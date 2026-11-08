@@ -1,16 +1,37 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
 import CategoryFilter from "../components/CategoryFilter";
-import products from "../data/products";
 import { useCart } from "../context/CartContext";
+import { getAllProduct } from "../api/api";
 
 const Products = () => {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const token = localStorage.getItem("token");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    fetchAllProduct();
+  }, []);
 
+  const fetchAllProduct = async () => {
+    try {
+      setLoading(true);
+
+      const data = await getAllProduct(token);
+      if (data) {
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setError("Failed to load products.");
+    } finally {
+      setLoading(false);
+    }
+  };
   const { addToCart, cartCount } = useCart();
-
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const isVisible =
@@ -20,23 +41,23 @@ const Products = () => {
         product.quantity > 0;
 
       const matchesSearch =
-        product.name.toLowerCase().includes(search.toLowerCase()) ||
-        product.description.toLowerCase().includes(search.toLowerCase()) ||
-        product.brand.toLowerCase().includes(search.toLowerCase());
+        product.brand?.toLowerCase().includes(search.toLowerCase()) ||
+        product.description?.toLowerCase().includes(search.toLowerCase()) ||
+        product.categoryName?.toLowerCase().includes(search.toLowerCase());
 
       const matchesCategory =
-        selectedCategory === "All" || product.category === selectedCategory;
+        selectedCategory === "All" || product.categoryName === selectedCategory;
 
       return isVisible && matchesSearch && matchesCategory;
     });
-  }, [search, selectedCategory]);
+  }, [products, search, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-[#f8faf4]">
       <Navbar search={search} setSearch={setSearch} cartCount={cartCount} />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        <section className="relative mb-10 overflow-hidden rounded-3xl bg-gradient-to-r from-green-800 to-green-600 px-6 py-10 text-white sm:px-10 sm:py-14">
+        <section className="relative mb-10 overflow-hidden rounded-3xl bg-linear-to-r from-green-800 to-green-600 px-6 py-10 text-white sm:px-10 sm:py-14">
           <div className="relative z-10 max-w-2xl">
             <span className="inline-block rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-wider">
               Freshness delivered daily

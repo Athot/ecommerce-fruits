@@ -1,6 +1,6 @@
 import axios from "axios";
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const IMAGE_BASE_URL = "http://localhost:8080";
 export const login = async (data) => {
   try {
     const res = await axios.post(`${BASE_URL}/auth/signIn`, data);
@@ -33,6 +33,25 @@ export const getAllCategory = async (token) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// update category
+export const updateCategory = async (editingId, token, newCategory) => {
+  try {
+    debugger;
+    const res = await axios.put(
+      `${BASE_URL}/category/${editingId}`,
+      newCategory,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
     return res.data;
   } catch (error) {
     throw error;
@@ -73,6 +92,21 @@ export const getAllProduct = async (token) => {
     throw error;
   }
 };
+// get product by ID
+export const getProductById = async (token, productID) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/products/${productID}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return res.data;
+  } catch (error) {
+    // console.error("Price update error:", error);
+    throw error;
+  }
+};
 
 // get all orders
 export const getAllOrders = async (token) => {
@@ -95,6 +129,42 @@ export const getAllOrders = async (token) => {
 export const updateOrderStatus = async (token, data) => {
   try {
     const res = await axios.get(`${BASE_URL}/orders`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log(res.data);
+    return res.data;
+  } catch (error) {
+    // console.error("Price update error:", error);
+    throw error;
+  }
+};
+
+// add to cart
+
+export const addedToCart = async (token, data) => {
+  debugger;
+  try {
+    const res = await axios.post(`${BASE_URL}/cart/add-cart`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log(res.data);
+    return res.data;
+  } catch (error) {
+    // console.error("Price update error:", error);
+    throw error;
+  }
+};
+
+// get user cart
+export const getUserCart = async (token, id) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/cart/user/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

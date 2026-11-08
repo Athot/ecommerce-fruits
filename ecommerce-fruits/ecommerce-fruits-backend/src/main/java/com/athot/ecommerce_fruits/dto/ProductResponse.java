@@ -3,6 +3,7 @@ package com.athot.ecommerce_fruits.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,7 +21,7 @@ public class ProductResponse {
     private String description;
     private String brand;
     private BigDecimal price;
-    private String imageUrl;
+    private List<String> images;
     private int categoryId;
     private String categoryName;
     private Date releaseDate;

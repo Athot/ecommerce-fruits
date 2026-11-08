@@ -1,20 +1,33 @@
 import React from "react";
 import { useNavigate } from "react-router";
+import { IMAGE_BASE_URL } from "../api/api";
 
 const ProductCard = ({ product, onAddToCart }) => {
+  const imageUrl = product.images?.[0]
+    ? `${IMAGE_BASE_URL}${product.images[0]}`
+    : "/placeholder.png";
+
   const navigate = useNavigate();
   return (
     <article className="group overflow-hidden rounded-2xl border border-gray-100 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-green-900/5">
       <div
-        className="relative aspect-[4/3] overflow-hidden bg-gray-50"
-        onClick={() => navigate(`/products/${product.id}`)}
+        className="relative aspect-4/3 overflow-hidden bg-gray-50"
+        onClick={() =>
+          navigate(`/products/${product.id}`, {
+            state: { product },
+          })
+        }
         role="link"
         tabIndex={0}
         aria-label={`View details for ${product.name}`}
       >
         <img
-          src={product.image}
-          alt={product.name}
+          src={
+            product.images?.length > 0
+              ? `${IMAGE_BASE_URL}${product.images[0]}`
+              : "/placeholder.png"
+          }
+          alt={product.brand}
           loading="lazy"
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105 cursor-pointer"
         />
@@ -35,7 +48,7 @@ const ProductCard = ({ product, onAddToCart }) => {
         </div>
 
         <h3 className="truncate text-base font-bold text-gray-900">
-          {product.name}
+          {product.brand}
         </h3>
 
         <p className="mt-1 text-sm text-gray-500">{product.unit}</p>

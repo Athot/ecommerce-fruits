@@ -27,7 +27,6 @@ export default function App() {
           <Route path="/categories" element={<UploadCategories />} />
           <Route path="/upload-product" element={<UploadProduct />} />
           {/* admin */}
-
           <Route path="/dashboard" element={<AdminDashboardHome />} />
           <Route path="/admin-product" element={<ProductScreen />} />
         </Routes>

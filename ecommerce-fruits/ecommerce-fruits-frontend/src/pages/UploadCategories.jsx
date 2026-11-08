@@ -10,7 +10,7 @@ import {
   XCircle,
   Package,
 } from "lucide-react";
-import { getAllCategory, uploadCategory } from "../api/api";
+import { getAllCategory, updateCategory, uploadCategory } from "../api/api";
 
 const emptyForm = {
   name: "",
@@ -63,9 +63,22 @@ export default function UploadCategories() {
     setError("");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const updateYourCategory = async (editingId, newCategory) => {
+    const res = await updateCategory(editingId, token, newCategory);
+    if (res) {
+      fetchAllCategory();
+      alert("Updated successfully");
+      return;
+    } else {
+      alert("Update not successful");
+      return;
+    }
+  };
 
+  const handleSubmit = async (e) => {
+    debugger;
+    console.log("Click");
+    e.preventDefault();
     const name = form.name.trim();
     const description = form.description.trim();
 
@@ -74,7 +87,7 @@ export default function UploadCategories() {
       return;
     }
 
-    const duplicate = categories.some(
+    const duplicate = filteredCategories.some(
       (category) =>
         category.name.toLowerCase() === name.toLowerCase() &&
         category.id !== editingId,
@@ -84,25 +97,26 @@ export default function UploadCategories() {
       setError("A category with this name already exists.");
       return;
     }
-
+    const newCategory = {
+      name,
+      description,
+      active: form.active,
+    };
+    debugger;
     if (editingId !== null) {
-      setCategories((current) =>
-        current.map((category) =>
-          category.id === editingId
-            ? { ...category, name, description, active: form.active }
-            : category,
-        ),
-      );
+      // setCategories((current) =>
+      //   current.map((category) =>
+      //     category.id === editingId
+      //       ? { ...category, name, description, active: form.active }
+      //       : category,
+      //   ),
+      // );
+      updateYourCategory(editingId, newCategory);
     } else {
-      const newCategory = {
-        name,
-        description,
-        active: form.active,
-      };
-
       const res = await uploadCategory(newCategory, token);
       if (res) {
         setCategories((current) => [newCategory, ...current]);
+        fetchAllCategory();
         alert("Upload successful");
       } else {
         setError("Failed to upload category.");

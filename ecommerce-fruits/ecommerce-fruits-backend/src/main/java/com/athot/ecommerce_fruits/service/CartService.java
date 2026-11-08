@@ -39,12 +39,23 @@ public class CartService {
                 "Insufficient stock. Available quantity: " + product.getQuantity()
             );
         }
-        Cart cart = new Cart(); 
+        // check whether product already exist in the user's cart
+        Cart cart = cartRepo.findByUser_IdAndProduct_Id(userId, productId).orElse(new Cart());
+        int existingQuantity = cart.getQuantity();
+        int newQuantity = existingQuantity + quantity;
+
+        // validate stock
+        if(newQuantity > product.getQuantity()){
+            throw new RuntimeException("Insufficient stock. Available quantity: " + product.getQuantity()
+);
+        }
+        // Cart cart = new Cart(); 
+        
         cart.setUser(user);
         cart.setProduct(product);
-        cart.setQuantity(quantity);
+        cart.setQuantity(newQuantity);
         
-        BigDecimal totalPrice = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+        BigDecimal totalPrice = product.getPrice().multiply(BigDecimal.valueOf(newQuantity));
         cart.setTotalPrice(totalPrice);
         
         return cartRepo.save(cart);

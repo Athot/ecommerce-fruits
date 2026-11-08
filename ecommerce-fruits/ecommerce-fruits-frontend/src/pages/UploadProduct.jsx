@@ -50,11 +50,6 @@ export default function UploadProduct() {
     setError("");
 
     try {
-      // if we want to send with the id
-      // const selectedCategory = filteredCategories.find(
-      //   (category) => String(category.id) === String(form.categoryId),
-      // );
-      console.log(filteredCategories);
       // if we want to send with the name
       const selectedCategory = filteredCategories.find(
         (category) => String(category.id) === String(form.categoryId),
@@ -98,7 +93,7 @@ export default function UploadProduct() {
 
       // sebd the actual image file separately
       images.forEach((img) => {
-        formData.append("image", img);
+        formData.append("images", img);
       });
       console.log("Product payload:", payload);
 

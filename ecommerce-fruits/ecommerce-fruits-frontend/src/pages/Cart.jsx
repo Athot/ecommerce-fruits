@@ -1,16 +1,29 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
+import { getUserCart, IMAGE_BASE_URL } from "../api/api";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cart, cartCount, cartTotal, updateQuantity, removeFromCart } =
-    useCart();
-
+  const [cart, setCart] = useState([]);
+  const { cartCount, cartTotal } = useCart();
+  const token = localStorage.getItem("token");
+  const userID = localStorage.getItem("userId");
+  useEffect(() => {
+    fetchUserCart();
+  }, []);
+  const fetchUserCart = async () => {
+    const data = await getUserCart(token, userID);
+    // debugger;
+    if (data) {
+      setCart(data);
+      return;
+    }
+  };
   return (
     <div className="min-h-screen bg-[#f8faf4]">
-      <Navbar search="" setSearch={() => {}} cartCount={cartCount} />
+      <Navbar search="" setSearch={() => {}} cartCount={cart.length} />
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -55,21 +68,21 @@ const Cart = () => {
                   className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 sm:flex-row sm:items-center"
                 >
                   <img
-                    src={item.image}
-                    alt={item.name}
+                    src={`${IMAGE_BASE_URL}${item?.product.images[0]}`}
+                    alt={item.brand}
                     className="h-28 w-full rounded-xl object-cover sm:w-32"
                   />
 
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-green-700">
-                      {item.category}
+                      {item.product.category.name}
                     </p>
                     <h2 className="mt-1 font-bold text-gray-900">
-                      {item.name}
+                      {item.product.brand}
                     </h2>
                     <p className="mt-1 text-sm text-gray-500">{item.unit}</p>
                     <p className="mt-2 font-bold text-gray-900">
-                      ₹{item.price}
+                      ₹{item.product.price}
                     </p>
                   </div>
 

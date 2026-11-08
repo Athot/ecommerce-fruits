@@ -1,14 +1,17 @@
+
 package com.athot.ecommerce_fruits.service;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.athot.ecommerce_fruits.dto.ProductResponse;
@@ -18,49 +21,64 @@ import com.athot.ecommerce_fruits.repository.ProductRepo;
 
 @Service
 public class ProductService {
+
     @Autowired
     private ProductRepo repo;
 
+    // CREATE PRODUCT WITH MULTIPLE IMAGES
+    public Product createProducts(Product product, List<MultipartFile> images) throws Exception {
 
-    public Product createProducts(Product product, MultipartFile image) throws Exception{
-        
-        if(image != null && !image.isEmpty()){
-            String fileName = UUID.randomUUID() + "_" + image.getOriginalFilename();
+        List<String> imageUrls = new ArrayList<>();
 
+        if (images != null) {
+            for (MultipartFile image : images) {
 
-        Path uploadPath = Paths.get("uploads/products")
-                .toAbsolutePath()
-                .normalize();
+                if (image == null || image.isEmpty()) {
+                    continue;
+                }
 
-        Files.createDirectories(uploadPath);
+                String fileName = UUID.randomUUID() + "_" + image.getOriginalFilename();
 
-        Path filePath = uploadPath.resolve(fileName).normalize();
+                Path uploadPath = Paths.get("uploads/products")
+                        .toAbsolutePath()
+                        .normalize();
 
-        if (!filePath.startsWith(uploadPath)) {
-            throw new IllegalArgumentException("Invalid file path");
+                Files.createDirectories(uploadPath);
+
+                Path filePath = uploadPath.resolve(fileName).normalize();
+
+                if (!filePath.startsWith(uploadPath)) {
+                    throw new IllegalArgumentException("Invalid file path");
+                }
+
+                Files.copy(
+                        image.getInputStream(),
+                        filePath,
+                        StandardCopyOption.REPLACE_EXISTING
+                );
+
+                imageUrls.add("/uploads/products/" + fileName);
+            }
         }
 
-        Files.copy(
-                image.getInputStream(),
-                filePath,
-                StandardCopyOption.REPLACE_EXISTING
-        );
+        product.setImages(imageUrls);
 
-        product.setImageUrl("/uploads/products/" + fileName);
-    }
-
-        
-        
         return repo.save(product);
     }
-        public List<ProductResponse> getAllProduct() {
+
+    // GET ALL PRODUCTS
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getAllProduct() {
+
         return repo.findAll()
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
     }
 
+    // CONVERT PRODUCT TO RESPONSE DTO
     private ProductResponse convertToResponse(Product product) {
+
         ProductResponse response = new ProductResponse();
 
         response.setId(product.getId());
@@ -68,8 +86,9 @@ public class ProductService {
         response.setBrand(product.getBrand());
         response.setPrice(product.getPrice());
 
-        // image url
-        response.setImageUrl(product.getImageUrl());
+        response.setImages(product.getImages() == null || product.getImages().isEmpty()
+            ? List.of() 
+            : product.getImages());
 
         response.setCategoryId(product.getCategory().getId());
         response.setCategoryName(product.getCategory().getName());
@@ -84,28 +103,43 @@ public class ProductService {
         return response;
     }
 
-    public Product getProductsById(int id){
-        return repo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found" + id));
+    // GET PRODUCT BY ID
+    @Transactional(readOnly = true)
+    public ProductResponse getProductsById(int id) {
+
+        Product product = repo.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
+
+        return convertToResponse(product);
     }
-    
-    public Product updateProduct(int id, Product product){
-        Product existingProduct = repo.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));  
+
+    // UPDATE PRODUCT (PRESERVES EXISTING IMAGES)
+    public Product updateProduct(int id, Product product) {
+
+        Product existingProduct = repo.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
+
         existingProduct.setDescription(product.getDescription());
-        existingProduct.setBrand(product.getDescription());
+        existingProduct.setBrand(product.getBrand());
         existingProduct.setPrice(product.getPrice());
         existingProduct.setCategory(product.getCategory());
         existingProduct.setReleaseDate(product.getReleaseDate());
         existingProduct.setAvailable(product.isAvailable());
         existingProduct.setQuantity(product.getQuantity());
         existingProduct.setActive(product.getActive());
-        existingProduct.setDeleted(product.getDeleted()); 
+        existingProduct.setDeleted(product.getDeleted());
+
         return repo.save(existingProduct);
     }
 
+    // DELETE PRODUCT
+    public String deleteProducts(int id) {
 
-    public String deleteProducts(int id){
-        Product existingProduct = repo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not deleted"));
-         repo.delete(existingProduct);
-         return "Product Deleted Successful";
+        Product existingProduct = repo.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
+
+        repo.delete(existingProduct);
+
+        return "Product Deleted Successfully";
     }
 }

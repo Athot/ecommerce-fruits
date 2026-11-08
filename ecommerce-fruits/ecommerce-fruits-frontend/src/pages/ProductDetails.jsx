@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import products from "../data/products";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { addedToCart, IMAGE_BASE_URL } from "../api/api";
 
 const ProductDetails = () => {
-  const { id } = useParams();
-  const product = products.find((item) => item.id === Number(id));
+  const location = useLocation();
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
+  const product = location.state?.product;
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -26,21 +28,38 @@ const ProductDetails = () => {
 
   const productImages = product?.images?.length
     ? product.images
-    : product?.image
-      ? [product.image]
+    : product?.images
+      ? [product.images]
       : [];
 
   const [selectedImage, setSelectedImage] = useState(0);
 
   const description =
     product.description ||
-    `Enjoy fresh, delicious ${product.name.toLowerCase()}, carefully selected for quality and taste. Perfect for everyday meals and a healthy lifestyle.`;
+    `Enjoy fresh, delicious ${product.label.toLowerCase()}, carefully selected for quality and taste. Perfect for everyday meals and a healthy lifestyle.`;
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
+  // const handleAddToCart = () => {
+  //   for (let i = 0; i < quantity; i++) {
+  //     addToCart(product);
+  //   }
+  //   setAdded(true);
+  // };
+  const handleAddToCart = async () => {
+    try {
+      const cartData = {
+        userId: userId,
+        productId: product.id,
+        quantity: quantity,
+      };
+      const res = await addedToCart(token, cartData);
+
+      if (res) {
+        setAdded(true);
+        alert("Item added successful");
+      }
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
     }
-    setAdded(true);
   };
 
   return (
@@ -73,7 +92,7 @@ const ProductDetails = () => {
           <span>/</span>
           <span>{product.category}</span>
           <span>/</span>
-          <span className="font-medium text-gray-900">{product.name}</span>
+          <span className="font-medium text-gray-900">{product.brand}</span>
         </nav>
 
         {/* Product information */}
@@ -99,8 +118,8 @@ const ProductDetails = () => {
                     }`}
                   >
                     <img
-                      src={image}
-                      alt={`${product.name} view ${index + 1}`}
+                      src={`${IMAGE_BASE_URL}${image}`}
+                      alt={`${product.label} view ${index + 1}`}
                       className="h-full w-full object-contain p-1"
                       loading="lazy"
                     />
@@ -109,12 +128,12 @@ const ProductDetails = () => {
               </div>
 
               {/* Main image */}
-              <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-2xl bg-[#f8faf4] sm:min-h-[460px]">
+              <div className="flex min-h-75 items-center justify-center overflow-hidden rounded-2xl bg-[#f8faf4] sm:min-h-[460px]">
                 <img
                   key={productImages[selectedImage]}
-                  src={productImages[selectedImage]}
-                  alt={product.name}
-                  className="h-full max-h-[460px] w-full object-contain p-4 transition duration-300 sm:p-8"
+                  src={`${IMAGE_BASE_URL}${productImages[selectedImage]}`}
+                  alt={product.label}
+                  className="h-full max-h-115 w-full object-contain p-4 transition duration-300 sm:p-8"
                 />
               </div>
             </div>
@@ -125,11 +144,11 @@ const ProductDetails = () => {
                 🌿 Fresh Produce
               </span>
 
-              {product.badge && (
+              {/* {product.badge && (
                 <span className="rounded-full bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700">
                   ⭐ {product.badge}
                 </span>
-              )}
+              )} */}
             </div>
           </section>
 
@@ -140,22 +159,22 @@ const ProductDetails = () => {
             </p>
 
             <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              {product.name}
+              {product.label}
             </h1>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            {/* <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="text-lg text-amber-500">★★★★★</span>
               <span className="font-semibold text-gray-800">
                 {product.rating}
               </span>
               <span className="text-sm text-gray-500">Customer rating</span>
-            </div>
+            </div> */}
 
             <div className="mt-6 flex items-baseline gap-2">
               <span className="text-4xl font-extrabold text-green-700">
                 ₹{Number(product.price).toFixed(2)}
               </span>
-              <span className="text-gray-500">/ {product.unit}</span>
+              {/* <span className="text-gray-500">/ {product.unit}</span> */}
             </div>
 
             <p className="mt-6 leading-7 text-gray-600">{description}</p>

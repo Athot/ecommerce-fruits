@@ -21,10 +21,9 @@ import com.athot.ecommerce_fruits.service.CartService;
 public class CartController {
      @Autowired 
      private CartService cartService;
-
     //  add product to cart
     @PostMapping("/add-cart")
-    public Cart addToCart( @RequestBody AddCartRequest request
+    public Cart addToCart(@RequestBody AddCartRequest request
     ){
         return cartService.addToCart(request.getUserId(), 
         request.getProductId(),
@@ -32,7 +31,7 @@ public class CartController {
     }
      
     // get user's cart
-    @GetMapping("/cart/user/{userId}")
+    @GetMapping("/user/{userId}")
     public List<Cart> getUserCarts(@PathVariable int userId
     ){
         return cartService.getUserCarts(userId);

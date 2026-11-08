@@ -25,11 +25,12 @@ const Login = () => {
 
     try {
       const response = await login({ email, password });
-
+      console.log(response);
       // Remember or forget the email based on the checkbox
       if (rememberMe) {
         localStorage.setItem("rememberedEmail", email);
         localStorage.setItem("token", response.token);
+        localStorage.setItem("userId", response.id);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
