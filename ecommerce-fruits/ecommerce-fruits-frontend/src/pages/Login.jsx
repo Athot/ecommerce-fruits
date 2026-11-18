@@ -35,8 +35,13 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
 
+      if (response.role === "ADMIN") {
+        navigate("/dashboard");
+      } else if (response.role === "USER") {
+        navigate("/product");
+      }
+
       console.log("Login successful:", response);
-      navigate("/product");
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message ||

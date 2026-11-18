@@ -39,7 +39,7 @@ const OrderSuccess = () => {
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link
-            to="/products"
+            to="/product"
             className="flex-1 rounded-xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700"
           >
             Continue Shopping

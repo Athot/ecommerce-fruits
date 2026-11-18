@@ -11,7 +11,12 @@ import {
   Package,
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import { getAllProduct } from "../api/api";
+import {
+  editProduct,
+  getAllCategory,
+  getAllProduct,
+  IMAGE_BASE_URL,
+} from "../api/api";
 
 const emptyForm = {
   description: "",
@@ -23,42 +28,63 @@ const emptyForm = {
   quantity: 0,
   active: true,
   deleted: false,
+  images: [],
 };
 
 export default function ProductScreen() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
+  const [newImages, setNewImages] = useState([]);
+  const token = localStorage.getItem("token");
+
+  const [existingCategories, setFilteredCategories] = useState([]);
   useEffect(() => {
     fetchAllProduct();
+    fetchAllCategory();
   }, []);
-  const token = localStorage.getItem("token");
+
+  // api to get all the category
+  const fetchAllCategory = async () => {
+    const data = await getAllCategory(token);
+    if (data) {
+      setFilteredCategories(data);
+    }
+  };
+
   const fetchAllProduct = async () => {
     const res = await getAllProduct(token);
     if (res) {
-      setCategories(res);
+      setAllProducts(res);
     }
   };
-  const filteredCategories = categories.filter((category) =>
-    `${category.name} ${category.description}`
+  const filteredProduct = allProducts.filter((product) =>
+    `${product.name} ${product.description}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
 
-  const activeCount = categories.filter((category) => category.active).length;
+  const activeCount = allProducts.filter((product) => product.active).length;
 
-  const openEditForm = (category) => {
+  const openEditForm = (product) => {
     setForm({
-      name: category.name,
-      description: category.description,
-      active: category.active,
+      description: product.description || "",
+      brand: product.brand || "",
+      price: product.price?.toString() || "",
+      categoryId: product.categoryId?.toString() || "",
+      releaseDate: product.releaseDate || "",
+      available: product.available ?? true,
+      quantity: product.quantity ?? 0,
+      active: product.active ?? true,
+      deleted: product.deleted ?? false,
+      images: product.images || [],
     });
 
-    setEditingId(category.id);
+    setEditingId(product.id);
     setError("");
     setShowForm(true);
   };
@@ -70,68 +96,92 @@ export default function ProductScreen() {
     setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const name = form.name.trim();
-    const description = form.description.trim();
+    const name = form.brand.trim();
 
     if (!name) {
-      setError("Please enter a category name.");
+      setError("Please enter a product name.");
       return;
     }
 
-    const duplicate = categories.some(
-      (category) =>
-        category.name.toLowerCase() === name.toLowerCase() &&
-        category.id !== editingId,
+    const duplicate = allProducts.some(
+      (product) =>
+        product.brand.toLowerCase() === name.toLowerCase() &&
+        product.id !== editingId,
     );
 
     if (duplicate) {
-      setError("A category with this name already exists.");
+      setError("Product with this name already exists.");
       return;
     }
-
+    debugger;
     if (editingId !== null) {
-      setCategories((current) =>
-        current.map((category) =>
-          category.id === editingId
-            ? { ...category, name, description, active: form.active }
-            : category,
-        ),
-      );
-    } else {
-      const newCategory = {
-        id: Date.now(),
-        name,
-        description,
-        active: form.active,
-      };
+      try {
+        const productData = {
+          description: form.description,
+          brand: form.brand,
+          price: form.price,
+          categoryId: form.categoryId,
+          releaseDate: form.releaseDate,
+          available: form.available,
+          quantity: form.quantity,
+          active: form.active,
+          deleted: form.deleted,
+          images: form.images,
+        };
 
-      setCategories((current) => [newCategory, ...current]);
+        const formData = new FormData();
+
+        // Existing product details and image paths
+        formData.append(
+          "product",
+          new Blob([JSON.stringify(productData)], {
+            type: "application/json",
+          }),
+        );
+
+        // Newly selected image files
+        newImages.forEach((image) => {
+          formData.append("images", image);
+        });
+
+        const res = await editProduct(token, editingId, formData);
+
+        if (res) {
+          alert("Product updated successfully!");
+
+          await fetchAllProduct();
+          await fetchAllCategory();
+
+          closeForm();
+        }
+      } catch (error) {
+        console.error("Update product failed:", error);
+        setError("Failed to update product.");
+      }
     }
-
-    closeForm();
   };
 
   const toggleActive = (id) => {
-    setCategories((current) =>
-      current.map((category) =>
-        category.id === id
-          ? { ...category, active: !category.active }
-          : category,
+    setAllProducts((current) =>
+      current.map((product) =>
+        product.id === id ? { ...product, active: !product.active } : product,
       ),
     );
   };
 
   const deleteCategory = (id) => {
-    const category = categories.find((item) => item.id === id);
+    const category = allProducts.find((item) => item.id === id);
 
-    if (category && window.confirm(`Delete the "${category.name}" category?`)) {
-      setCategories((current) => current.filter((item) => item.id !== id));
+    if (
+      category &&
+      window.confirm(`Delete the "${allProducts.brand}" product?`)
+    ) {
+      setAllProducts((current) => current.filter((item) => item.id !== id));
     }
   };
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       {/* Page heading */}
@@ -160,9 +210,9 @@ export default function ProductScreen() {
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Categories</p>
+              <p className="text-sm text-gray-500">Total Product</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
-                {categories.length}
+                {allProducts.length}
               </p>
             </div>
             <div className="rounded-xl bg-red-50 p-3 text-red-600">
@@ -174,7 +224,7 @@ export default function ProductScreen() {
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Active Categories</p>
+              <p className="text-sm text-gray-500">Active Product</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
                 {activeCount}
               </p>
@@ -188,9 +238,9 @@ export default function ProductScreen() {
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Inactive Categories</p>
+              <p className="text-sm text-gray-500">Inactive Product</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
-                {categories.length - activeCount}
+                {allProducts.length - activeCount}
               </p>
             </div>
             <div className="rounded-xl bg-gray-100 p-3 text-gray-600">
@@ -204,7 +254,7 @@ export default function ProductScreen() {
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="font-bold text-gray-900">All Categories</h2>
+            <h2 className="font-bold text-gray-900">All Products</h2>
             <p className="mt-1 text-sm text-gray-500">
               Manage your store's product.
             </p>
@@ -216,8 +266,8 @@ export default function ProductScreen() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search categories..."
-              aria-label="Search categories"
+              placeholder="Search product..."
+              aria-label="Search product"
               className="w-full min-w-0 bg-transparent text-sm outline-none sm:w-56"
             />
           </div>
@@ -235,8 +285,8 @@ export default function ProductScreen() {
             </thead>
 
             <tbody className="divide-y divide-gray-100">
-              {filteredCategories.map((category) => (
-                <tr key={category.id} className="transition hover:bg-gray-50">
+              {filteredProduct.map((product) => (
+                <tr key={product.id} className="transition hover:bg-gray-50">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
@@ -244,10 +294,10 @@ export default function ProductScreen() {
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">
-                          {category.name}
+                          {product.name}
                         </p>
                         <p className="mt-1 text-xs text-gray-400">
-                          ID: {category.id}
+                          ID: {product.id}
                         </p>
                       </div>
                     </div>
@@ -255,27 +305,27 @@ export default function ProductScreen() {
 
                   <td className="max-w-xs px-5 py-4 text-sm text-gray-600">
                     <p className="line-clamp-2">
-                      {category.description || "No description provided"}
+                      {product.description || "No description provided"}
                     </p>
                   </td>
 
                   <td className="px-5 py-4">
                     <button
                       type="button"
-                      onClick={() => toggleActive(category.id)}
+                      onClick={() => toggleActive(product.id)}
                       title="Click to change category status"
                       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                        category.active
+                        product.active
                           ? "bg-green-50 text-green-700"
                           : "bg-gray-100 text-gray-600"
                       }`}
                     >
                       <span
                         className={`h-2 w-2 rounded-full ${
-                          category.active ? "bg-green-500" : "bg-gray-400"
+                          product.active ? "bg-green-500" : "bg-gray-400"
                         }`}
                       />
-                      {category.active ? "Active" : "Inactive"}
+                      {product.active ? "Active" : "Inactive"}
                     </button>
                   </td>
 
@@ -283,8 +333,8 @@ export default function ProductScreen() {
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
-                        onClick={() => openEditForm(category)}
-                        aria-label={`Edit ${category.name}`}
+                        onClick={() => openEditForm(product)}
+                        aria-label={`Edit ${product.name}`}
                         className="rounded-lg border border-gray-200 p-2 text-gray-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                       >
                         <Pencil size={17} />
@@ -292,8 +342,8 @@ export default function ProductScreen() {
 
                       <button
                         type="button"
-                        onClick={() => deleteCategory(category.id)}
-                        aria-label={`Delete ${category.name}`}
+                        onClick={() => deleteCategory(product.id)}
+                        aria-label={`Delete ${product.brand}`}
                         className="rounded-lg border border-gray-200 p-2 text-gray-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                       >
                         <Trash2 size={17} />
@@ -303,7 +353,7 @@ export default function ProductScreen() {
                 </tr>
               ))}
 
-              {filteredCategories.length === 0 && (
+              {filteredProduct.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-5 py-16 text-center">
                     <Tags size={36} className="mx-auto text-gray-300" />
@@ -321,7 +371,7 @@ export default function ProductScreen() {
         </div>
 
         <div className="border-t border-gray-100 px-5 py-4 text-sm text-gray-500">
-          Showing {filteredCategories.length} of {categories.length} categories
+          Showing {filteredProduct.length} of {allProducts.length} product
         </div>
       </section>
 
@@ -348,7 +398,7 @@ export default function ProductScreen() {
                   {editingId !== null ? "Edits Category" : "Add Category"}
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Enter the category information below.
+                  Enter the product information below.
                 </p>
               </div>
 
@@ -431,12 +481,106 @@ export default function ProductScreen() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-3"
                 >
                   <option value="">Select category</option>
-                  {categories.map((category) => (
+                  {existingCategories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* product images */}
+
+              {/* Product Images */}
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Product Images
+                </label>
+
+                {/* Existing Images */}
+                {form.images?.length > 0 && (
+                  <>
+                    <p className="mb-3 text-sm text-gray-500">
+                      Existing Images
+                    </p>
+
+                    <div className="mb-4 grid grid-cols-3 gap-3">
+                      {form.images.map((image, index) => (
+                        <div key={image} className="relative">
+                          <img
+                            src={`${IMAGE_BASE_URL}${image}`}
+                            alt={`Product ${index + 1}`}
+                            className="h-28 w-full rounded-xl border object-cover"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setForm((prev) => ({
+                                ...prev,
+                                images: prev.images.filter(
+                                  (_, i) => i !== index,
+                                ),
+                              }))
+                            }
+                            className="absolute right-1 top-1 rounded-full bg-red-600 px-2 py-1 text-xs text-white"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Upload New Images */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    setNewImages((prev) => [
+                      ...prev,
+                      ...Array.from(e.target.files),
+                    ]);
+                    e.target.value = "";
+                  }}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3"
+                />
+
+                {/* Newly Selected Images */}
+                {newImages.length > 0 && (
+                  <div className="mt-4">
+                    <p className="mb-3 text-sm text-gray-500">New Images</p>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      {newImages.map((image, index) => (
+                        <div
+                          key={`${image.name}-${index}`}
+                          className="relative"
+                        >
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={image.name}
+                            className="h-28 w-full rounded-xl border object-cover"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setNewImages((prev) =>
+                                prev.filter((_, i) => i !== index),
+                              )
+                            }
+                            className="absolute right-1 top-1 rounded-full bg-red-600 px-2 py-1 text-xs text-white"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Release Date and Quantity */}
@@ -511,6 +655,22 @@ export default function ProductScreen() {
                   className="h-5 w-5 accent-red-600"
                 />
               </label>
+              <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700"
+                >
+                  {editingId !== null ? "Save Changes" : "Create Category"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

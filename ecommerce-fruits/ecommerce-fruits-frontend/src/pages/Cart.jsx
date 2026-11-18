@@ -7,18 +7,22 @@ import { getUserCart, IMAGE_BASE_URL } from "../api/api";
 const Cart = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
-  const { cartCount, cartTotal } = useCart();
+  const { cartCount, cartTotal, syncCart } = useCart();
   const token = localStorage.getItem("token");
   const userID = localStorage.getItem("userId");
   useEffect(() => {
     fetchUserCart();
   }, []);
+  const subtotal = cart.reduce(
+    (total, item) => total + Number(item.totalPrice || 0),
+    0,
+  );
   const fetchUserCart = async () => {
     const data = await getUserCart(token, userID);
     // debugger;
     if (data) {
       setCart(data);
-      return;
+      syncCart(data);
     }
   };
   return (
@@ -39,7 +43,7 @@ const Cart = () => {
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            {cartCount} {cartCount === 1 ? "item" : "items"} in your cart
+            {cart.length} {cart.length === 1 ? "item" : "items"} in your cart
           </p>
         </div>
 
@@ -131,7 +135,7 @@ const Cart = () => {
               <div className="mt-6 space-y-4 text-sm">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>₹{cartTotal.toFixed(2)}</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Delivery</span>
@@ -140,7 +144,7 @@ const Cart = () => {
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between font-bold text-gray-900">
                     <span>Total</span>
-                    <span>₹{cartTotal.toFixed(2)}</span>
+                    <span>₹{subtotal.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

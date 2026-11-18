@@ -15,8 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.athot.ecommerce_fruits.dto.ProductResponse;
+import com.athot.ecommerce_fruits.dto.ProductUpdateRequest;
 import com.athot.ecommerce_fruits.exception.ProductNotFoundException;
+import com.athot.ecommerce_fruits.model.Category;
 import com.athot.ecommerce_fruits.model.Product;
+import com.athot.ecommerce_fruits.repository.CategoryRepo;
 import com.athot.ecommerce_fruits.repository.ProductRepo;
 
 @Service
@@ -25,6 +28,8 @@ public class ProductService {
     @Autowired
     private ProductRepo repo;
 
+    @Autowired 
+    private CategoryRepo categoryRepo;
     // CREATE PRODUCT WITH MULTIPLE IMAGES
     public Product createProducts(Product product, List<MultipartFile> images) throws Exception {
 
@@ -113,24 +118,80 @@ public class ProductService {
         return convertToResponse(product);
     }
 
-    // UPDATE PRODUCT (PRESERVES EXISTING IMAGES)
-    public Product updateProduct(int id, Product product) {
+// UPDATE PRODUCT WITH MULTIPLE IMAGES
+public ProductResponse updateProduct(
+        int id,
+        ProductUpdateRequest product,
+        List<MultipartFile> newImages
+) throws Exception {
 
-        Product existingProduct = repo.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
+    Product existingProduct = repo.findById(id)
+        .orElseThrow(() ->
+            new ProductNotFoundException("Product not found: " + id));
 
-        existingProduct.setDescription(product.getDescription());
-        existingProduct.setBrand(product.getBrand());
-        existingProduct.setPrice(product.getPrice());
-        existingProduct.setCategory(product.getCategory());
-        existingProduct.setReleaseDate(product.getReleaseDate());
-        existingProduct.setAvailable(product.isAvailable());
-        existingProduct.setQuantity(product.getQuantity());
-        existingProduct.setActive(product.getActive());
-        existingProduct.setDeleted(product.getDeleted());
+    // Find category using categoryId
+    Category category = categoryRepo.findById(product.getCategoryId())
+        .orElseThrow(() ->
+            new RuntimeException("Category not found"));
 
-        return repo.save(existingProduct);
+    // Update product details
+    existingProduct.setDescription(product.getDescription());
+    existingProduct.setBrand(product.getBrand());
+    existingProduct.setPrice(product.getPrice());
+    existingProduct.setCategory(category);
+    existingProduct.setReleaseDate(product.getReleaseDate());
+    existingProduct.setAvailable(product.isAvailable());
+    existingProduct.setQuantity(product.getQuantity());
+    existingProduct.setActive(product.getActive());
+    existingProduct.setDeleted(product.getDeleted());
+
+    // Keep existing images selected by admin
+    List<String> updatedImages = new ArrayList<>();
+
+    if (product.getImages() != null) {
+        updatedImages.addAll(product.getImages());
     }
+
+    // Upload new images
+    if (newImages != null) {
+        for (MultipartFile image : newImages) {
+
+            if (image == null || image.isEmpty()) {
+                continue;
+            }
+
+            String fileName = UUID.randomUUID() + "_"
+                    + image.getOriginalFilename();
+
+            Path uploadPath = Paths.get("uploads/products")
+                    .toAbsolutePath()
+                    .normalize();
+
+            Files.createDirectories(uploadPath);
+
+            Path filePath = uploadPath.resolve(fileName).normalize();
+
+            if (!filePath.startsWith(uploadPath)) {
+                throw new IllegalArgumentException("Invalid file path");
+            }
+
+            Files.copy(
+                image.getInputStream(),
+                filePath,
+                StandardCopyOption.REPLACE_EXISTING
+            );
+
+            updatedImages.add("/uploads/products/" + fileName);
+        }
+    }
+
+    existingProduct.setImages(updatedImages);
+
+    Product savedProduct = repo.save(existingProduct);
+
+    return convertToResponse(savedProduct);
+}
+
 
     // DELETE PRODUCT
     public String deleteProducts(int id) {

@@ -138,13 +138,13 @@ export default function UploadCategories() {
   };
 
   const deleteCategory = (id) => {
-    const category = categories.find((item) => item.id === id);
+    const category = filteredCategories.find((item) => item.id === id);
 
     if (category && window.confirm(`Delete the "${category.name}" category?`)) {
       setCategories((current) => current.filter((item) => item.id !== id));
     }
   };
-
+  console;
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       {/* Page heading */}
@@ -174,6 +174,7 @@ export default function UploadCategories() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Categories</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{1}</p>
             </div>
             <div className="rounded-xl bg-red-50 p-3 text-red-600">
               <Tags size={24} />

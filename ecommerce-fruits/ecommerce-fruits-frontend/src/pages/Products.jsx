@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
 import CategoryFilter from "../components/CategoryFilter";
 import { useCart } from "../context/CartContext";
-import { getAllProduct } from "../api/api";
+import { addedToCart, getAllProduct, getUserCart } from "../api/api";
 
 const Products = () => {
   const [search, setSearch] = useState("");
@@ -12,7 +12,11 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const userID = localStorage.getItem("userId");
+  const [cartCount, setCartCount] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   useEffect(() => {
+    fetchUserCart();
     fetchAllProduct();
   }, []);
 
@@ -31,7 +35,34 @@ const Products = () => {
       setLoading(false);
     }
   };
-  const { addToCart, cartCount } = useCart();
+
+  const fetchUserCart = async () => {
+    const data = await getUserCart(token, userID);
+    // debugger;
+    if (data) {
+      setCartCount(data);
+      syncCart(data);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      const cartData = {
+        userId: userID,
+        productId: products.id,
+        quantity: quantity,
+      };
+      const res = await addedToCart(token, cartData);
+
+      if (res) {
+        setAdded(true);
+        alert("Item added successful");
+      }
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+    }
+  };
+  // const { addToCart, cartCount } = useCart();
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const isVisible =
@@ -54,7 +85,11 @@ const Products = () => {
 
   return (
     <div className="min-h-screen bg-[#f8faf4]">
-      <Navbar search={search} setSearch={setSearch} cartCount={cartCount} />
+      <Navbar
+        search={search}
+        setSearch={setSearch}
+        cartCount={cartCount.length}
+      />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <section className="relative mb-10 overflow-hidden rounded-3xl bg-linear-to-r from-green-800 to-green-600 px-6 py-10 text-white sm:px-10 sm:py-14">
@@ -147,7 +182,7 @@ const Products = () => {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onAddToCart={addToCart}
+                  // onAddToCart={addToCart}
                 />
               ))}
             </div>

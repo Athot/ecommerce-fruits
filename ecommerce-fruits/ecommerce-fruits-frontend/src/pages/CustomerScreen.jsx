@@ -1,148 +1,33 @@
-import { useMemo, useState } from "react";
-import {
-  Search,
-  Users,
-  UserCheck,
-  UserX,
-  ShoppingBag,
-  Eye,
-  X,
-  Mail,
-  MapPin,
-  Phone,
-} from "lucide-react";
-
-const initialCustomers = [
-  {
-    id: 1,
-    name: "Rahul Sharma",
-    email: "rahul@example.com",
-    phone: "+91 98765 43210",
-    address: "Indiranagar, Bengaluru",
-    joined: "2026-08-12",
-    orders: 8,
-    spent: 3240,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Priya Das",
-    email: "priya@example.com",
-    phone: "+91 98765 12340",
-    address: "Whitefield, Bengaluru",
-    joined: "2026-08-20",
-    orders: 5,
-    spent: 2180,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Amit Kumar",
-    email: "amit@example.com",
-    phone: "+91 91234 56780",
-    address: "Koramangala, Bengaluru",
-    joined: "2026-09-02",
-    orders: 3,
-    spent: 950,
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Sneha Roy",
-    email: "sneha@example.com",
-    phone: "+91 99887 76655",
-    address: "Jayanagar, Bengaluru",
-    joined: "2026-09-10",
-    orders: 12,
-    spent: 5870,
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "David Lal",
-    email: "david@example.com",
-    phone: "+91 90909 80808",
-    address: "Electronic City, Bengaluru",
-    joined: "2026-09-15",
-    orders: 1,
-    spent: 450,
-    status: "Inactive",
-  },
-  {
-    id: 6,
-    name: "Ananya Singh",
-    email: "ananya@example.com",
-    phone: "+91 90000 11122",
-    address: "HSR Layout, Bengaluru",
-    joined: "2026-10-01",
-    orders: 6,
-    spent: 2760,
-    status: "Active",
-  },
-];
-
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(amount);
+import { useEffect, useMemo, useState } from "react";
+import { Search, Users, UserCheck, Eye, X, Mail } from "lucide-react";
+import { getAllUsers } from "../api/api";
 
 export default function CustomerScreen() {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const token = localStorage.getItem("token");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
+  const [allUsers, setAllUsers] = useState([]);
+  useEffect(() => {
+    fetchAllUsers();
+  }, []);
+  const fetchAllUsers = async () => {
+    const res = await getAllUsers(token);
+    if (res) {
+      setAllUsers(res);
+    }
+  };
   const filteredCustomers = useMemo(() => {
-    return customers.filter((customer) => {
-      const matchesSearch = [customer.name, customer.email, customer.phone]
+    return allUsers.filter((customer) => {
+      const matchesSearch = [customer.name, customer.email]
         .join(" ")
         .toLowerCase()
         .includes(search.toLowerCase());
 
-      const matchesStatus =
-        statusFilter === "All" || customer.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [customers, search, statusFilter]);
-
-  const activeCount = customers.filter(
-    (customer) => customer.status === "Active",
-  ).length;
-
-  const totalSpent = customers.reduce(
-    (sum, customer) => sum + customer.spent,
-    0,
-  );
-
-  const totalOrders = customers.reduce(
-    (sum, customer) => sum + customer.orders,
-    0,
-  );
-
-  const toggleCustomerStatus = (id) => {
-    setCustomers((current) =>
-      current.map((customer) =>
-        customer.id === id
-          ? {
-              ...customer,
-              status: customer.status === "Active" ? "Inactive" : "Active",
-            }
-          : customer,
-      ),
-    );
-
-    setSelectedCustomer((current) =>
-      current?.id === id
-        ? {
-            ...current,
-            status: current.status === "Active" ? "Inactive" : "Active",
-          }
-        : current,
-    );
-  };
+  }, [allUsers, search]);
 
   return (
     <div className="space-y-7">
@@ -158,30 +43,9 @@ export default function CustomerScreen() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           label="Total Customers"
-          value={customers.length}
+          value={allUsers.length}
           icon={Users}
           iconStyle="bg-red-50 text-red-600"
-        />
-
-        <SummaryCard
-          label="Active Customers"
-          value={activeCount}
-          icon={UserCheck}
-          iconStyle="bg-green-50 text-green-600"
-        />
-
-        <SummaryCard
-          label="Inactive Customers"
-          value={customers.length - activeCount}
-          icon={UserX}
-          iconStyle="bg-gray-100 text-gray-600"
-        />
-
-        <SummaryCard
-          label="Total Orders"
-          value={totalOrders}
-          icon={ShoppingBag}
-          iconStyle="bg-blue-50 text-blue-600"
         />
       </div>
 
@@ -222,16 +86,12 @@ export default function CustomerScreen() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left">
+          <table className="w-full min-w-225 text-left">
             <thead className="bg-gray-50">
               <tr className="text-xs uppercase tracking-wider text-gray-500">
                 <th className="px-5 py-4">Customer</th>
-                <th className="px-5 py-4">Phone</th>
-                <th className="px-5 py-4">Joined Date</th>
-                <th className="px-5 py-4">Orders</th>
-                <th className="px-5 py-4">Total Spent</th>
-                <th className="px-5 py-4">Status</th>
-                <th className="px-5 py-4 text-right">Actions</th>
+                <th className="px-5 py-4">Email</th>
+                <th className="px-5 py-4">Role</th>
               </tr>
             </thead>
 
@@ -240,39 +100,17 @@ export default function CustomerScreen() {
                 <tr key={customer.id} className="hover:bg-gray-50">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 font-bold text-red-600">
-                        {customer.name
-                          .split(" ")
-                          .map((part) => part[0])
-                          .slice(0, 2)
-                          .join("")
-                          .toUpperCase()}
-                      </div>
                       <div>
                         <p className="font-semibold text-gray-900">
                           {customer.name}
                         </p>
-                        <p className="mt-1 text-xs text-gray-500">
-                          {customer.email}
-                        </p>
                       </div>
                     </div>
                   </td>
-
-                  <td className="px-5 py-4 text-sm text-gray-600">
-                    {customer.phone}
-                  </td>
-
-                  <td className="px-5 py-4 text-sm text-gray-600">
-                    {customer.joined}
-                  </td>
-
-                  <td className="px-5 py-4 font-semibold text-gray-800">
-                    {customer.orders}
-                  </td>
-
-                  <td className="px-5 py-4 font-semibold text-gray-900">
-                    {formatCurrency(customer.spent)}
+                  <td>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {customer.email}
+                    </p>
                   </td>
 
                   <td className="px-5 py-4">
@@ -281,13 +119,12 @@ export default function CustomerScreen() {
                       onClick={() => toggleCustomerStatus(customer.id)}
                       title="Click to change customer status"
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                        customer.status === "Active"
-                          ? "bg-green-50 text-green-700"
-                          : "bg-gray-100 text-gray-600"
+                        customer.role === "ADMIN"
+                          ? "bg-red-50 text-red-700"
+                          : "bg-green-100 text-green-600"
                       }`}
                     >
-                      <span className="mr-1.5">●</span>
-                      {customer.status}
+                      {customer.role}
                     </button>
                   </td>
 
@@ -322,13 +159,13 @@ export default function CustomerScreen() {
         </div>
 
         <div className="border-t border-gray-100 px-5 py-4 text-sm text-gray-500">
-          Showing {filteredCustomers.length} of {customers.length} customers
+          Showing {filteredCustomers.length} of {allUsers.length} customers
         </div>
       </section>
 
       {/* Customer details modal */}
       {selectedCustomer && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/40 p-4">
+        <div className="fixed inset-0 z-70 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
           <div
             role="dialog"
             aria-modal="true"
@@ -362,15 +199,6 @@ export default function CustomerScreen() {
                 <h4 className="mt-3 text-xl font-bold text-gray-900">
                   {selectedCustomer.name}
                 </h4>
-                <span
-                  className={`mt-2 rounded-full px-3 py-1 text-xs font-semibold ${
-                    selectedCustomer.status === "Active"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {selectedCustomer.status}
-                </span>
               </div>
 
               <div className="mt-6 space-y-4">
@@ -380,56 +208,15 @@ export default function CustomerScreen() {
                   value={selectedCustomer.email}
                 />
                 <DetailRow
-                  icon={Phone}
-                  label="Phone"
-                  value={selectedCustomer.phone}
-                />
-                <DetailRow
-                  icon={MapPin}
-                  label="Address"
-                  value={selectedCustomer.address}
+                  icon={UserCheck}
+                  label="Role"
+                  value={selectedCustomer.role}
                 />
               </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-gray-200 p-4">
-                  <p className="text-sm text-gray-500">Total Orders</p>
-                  <p className="mt-1 text-xl font-bold">
-                    {selectedCustomer.orders}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-200 p-4">
-                  <p className="text-sm text-gray-500">Total Spent</p>
-                  <p className="mt-1 text-xl font-bold text-green-700">
-                    {formatCurrency(selectedCustomer.spent)}
-                  </p>
-                </div>
-              </div>
-
-              <p className="mt-4 text-sm text-gray-500">
-                Customer since: {selectedCustomer.joined}
-              </p>
-
-              <button
-                type="button"
-                onClick={() => toggleCustomerStatus(selectedCustomer.id)}
-                className="mt-5 w-full rounded-xl border border-red-200 px-4 py-3 font-semibold text-red-600 hover:bg-red-50"
-              >
-                {selectedCustomer.status === "Active"
-                  ? "Deactivate Customer"
-                  : "Activate Customer"}
-              </button>
             </div>
           </div>
         </div>
       )}
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-5">
-        <p className="text-sm text-gray-500">Total customer spending</p>
-        <p className="mt-1 text-2xl font-bold text-gray-900">
-          {formatCurrency(totalSpent)}
-        </p>
-      </div>
     </div>
   );
 }
@@ -456,7 +243,7 @@ function DetailRow({ icon: Icon, label, value }) {
       </div>
       <div className="min-w-0">
         <p className="text-xs text-gray-500">{label}</p>
-        <p className="mt-1 break-words text-sm font-medium text-gray-900">
+        <p className="mt-1 wrap-break-word text-sm font-medium text-gray-900">
           {value}
         </p>
       </div>

@@ -6,6 +6,6 @@ import com.athot.ecommerce_fruits.model.Product;
 
 @Repository
 public interface ProductRepo extends JpaRepository<Product,Integer>{
-
+long count();
      
 }

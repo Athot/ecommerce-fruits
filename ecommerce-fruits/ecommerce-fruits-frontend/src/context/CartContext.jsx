@@ -45,10 +45,13 @@ export const CartProvider = ({ children }) => {
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   const cartTotal = cart.reduce(
-    (total, item) => total + Number(item.totalPrice),
+    (total, item) => total + Number(item.totalPrice || 0),
     0,
   );
 
+  const syncCart = (backendCart) => {
+    setCart(backendCart);
+  };
   return (
     <CartContext.Provider
       value={{
@@ -58,6 +61,7 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         cartCount,
         cartTotal,
+        syncCart,
       }}
     >
       {children}

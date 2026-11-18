@@ -69,9 +69,7 @@ public class OrderService {
         Order order = new Order();
         order.setUser(user);
         order.setTotalAmount(totalAmount);
-        order.setStatus(OrderStatus.PENDING);
-
-
+        order.setStatus(OrderStatus.PENDING); 
         // save delivery address with the order
         order.setFullName(request.getFullName());
         order.setPhone(request.getPhone());
@@ -86,16 +84,13 @@ public class OrderService {
 
         for (Cart cart : cartItems) {
 
-            OrderItem item = new OrderItem();
-
+            OrderItem item = new OrderItem(); 
             item.setOrder(savedOrder);
             item.setProduct(cart.getProduct());
             item.setQuantity(cart.getQuantity());
-            item.setPrice(cart.getProduct().getPrice());
-
+            item.setPrice(cart.getProduct().getPrice()); 
             orderItems.add(item);
-        }
-
+        } 
         orderItemRepo.saveAll(orderItems);
 
         // Clear the user's cart after successful order creation

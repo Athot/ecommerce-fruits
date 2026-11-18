@@ -3,9 +3,12 @@ package com.athot.ecommerce_fruits.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -15,8 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "orders")
-public class Order {
-
+public class Order { 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -55,6 +57,11 @@ public class Order {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+
+    // order item
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<OrderItem> orderItems;
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 }

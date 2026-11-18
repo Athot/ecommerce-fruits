@@ -1,22 +1,27 @@
 package com.athot.ecommerce_fruits.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.athot.ecommerce_fruits.dto.UserResponseDTO;
 import com.athot.ecommerce_fruits.model.User;
+import com.athot.ecommerce_fruits.repository.GetAllUserRepo;
 import com.athot.ecommerce_fruits.repository.UserRepo;
 @Service
 public class UserService {
     @Autowired
     private UserRepo userRepo;
+
+    @Autowired 
+    private GetAllUserRepo getAllUserRepo;
     
     @Autowired
     private JwtService jwtService;
     @Autowired
     private PasswordEncoder passwordEncoder;
-
     public User register(User user){
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepo.save(user);
@@ -37,4 +42,18 @@ public class UserService {
             token
         );
     }
+
+    // get all user
+    public List<UserResponseDTO> getUser() {
+    return getAllUserRepo.findAll()
+            .stream()
+            .map(user -> new UserResponseDTO(
+                    user.getId(),
+                    user.getName(),
+                    user.getEmail(),
+                    user.getRole(), null
+            ))
+            .toList();
+}
+    
 }

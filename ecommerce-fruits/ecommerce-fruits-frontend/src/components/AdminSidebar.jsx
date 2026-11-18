@@ -11,7 +11,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-
+import { useNavigate } from "react-router";
 const menuItems = [
   { label: "Dashboard", icon: LayoutDashboard },
   { label: "Products", icon: Package },
@@ -22,6 +22,7 @@ const menuItems = [
 ];
 
 export default function Sidebar({ open, setOpen, activePage, setActivePage }) {
+  const navigate = useNavigate();
   return (
     <>
       {open && (
@@ -94,11 +95,13 @@ export default function Sidebar({ open, setOpen, activePage, setActivePage }) {
             <Settings size={19} />
             Settings
           </button>
-
           <button
             onClick={() => {
-              // Connect your existing logout logic here.
-              window.alert("Connect your existing logout logic here.");
+              const confirm = window.confirm("Are you sure you want to logout");
+              if (confirm) {
+                localStorage.clear();
+                navigate("/");
+              }
             }}
             className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-red-600 hover:bg-red-50"
           >

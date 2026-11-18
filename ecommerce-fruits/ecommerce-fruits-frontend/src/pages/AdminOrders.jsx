@@ -9,74 +9,7 @@ import {
   Eye,
   X,
 } from "lucide-react";
-import { getAllOrders } from "../api/api";
-
-// const initialOrders = [
-//   {
-//     id: "FB-1001",
-//     customer: "Rahul Sharma",
-//     email: "rahul@example.com",
-//     date: "2026-10-16",
-//     items: [
-//       { name: "Fresh Red Apples", quantity: 2, price: 180 },
-//       { name: "Sweet Bananas", quantity: 1, price: 60 },
-//     ],
-//     total: 420,
-//     payment: "Paid",
-//     status: "Delivered",
-//     address: "Indiranagar, Bengaluru",
-//   },
-//   {
-//     id: "FB-1002",
-//     customer: "Priya Das",
-//     email: "priya@example.com",
-//     date: "2026-10-17",
-//     items: [
-//       { name: "Fresh Oranges", quantity: 2, price: 90 },
-//       { name: "Fresh Strawberries", quantity: 1, price: 120 },
-//     ],
-//     total: 300,
-//     payment: "Paid",
-//     status: "Processing",
-//     address: "Whitefield, Bengaluru",
-//   },
-//   {
-//     id: "FB-1003",
-//     customer: "Amit Kumar",
-//     email: "amit@example.com",
-//     date: "2026-10-17",
-//     items: [{ name: "Green Broccoli", quantity: 3, price: 55 }],
-//     total: 165,
-//     payment: "Pending",
-//     status: "Pending",
-//     address: "Koramangala, Bengaluru",
-//   },
-//   {
-//     id: "FB-1004",
-//     customer: "Sneha Roy",
-//     email: "sneha@example.com",
-//     date: "2026-10-18",
-//     items: [
-//       { name: "Ripe Mangoes", quantity: 2, price: 140 },
-//       { name: "Red Grapes", quantity: 1, price: 100 },
-//     ],
-//     total: 380,
-//     payment: "Paid",
-//     status: "Shipped",
-//     address: "Jayanagar, Bengaluru",
-//   },
-//   {
-//     id: "FB-1005",
-//     customer: "David Lal",
-//     email: "david@example.com",
-//     date: "2026-10-18",
-//     items: [{ name: "Fresh Carrots", quantity: 2, price: 45 }],
-//     total: 90,
-//     payment: "Failed",
-//     status: "Cancelled",
-//     address: "Electronic City, Bengaluru",
-//   },
-// ];
+import { getAllOrders, updateOrderStatus } from "../api/api";
 
 const statusStyles = {
   PENDING: "bg-amber-50 text-amber-700",
@@ -104,10 +37,22 @@ export default function AdminOrders() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedOrder, setSelectedOrder] = useState(null);
-  console.log(selectedOrder);
+
+  const token = localStorage.getItem("token");
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    const res = await getAllOrders(token);
+    debugger;
+    if (res) {
+      setOrders(Array.isArray(res) ? res : []);
+    }
+  };
   const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
-      const matchesSearch = [order.id, order?.user.name, order?.user.email]
+    return orders?.filter((order) => {
+      const matchesSearch = [order.id, order?.user?.name, order?.user?.email]
         .join(" ")
         .toLowerCase()
         .includes(search.toLowerCase());
@@ -123,28 +68,26 @@ export default function AdminOrders() {
     (sum, order) => sum + Number(order.totalAmount || 0),
     0,
   );
-  const updateStatus = (orderId, status) => {
-    setOrders((current) =>
-      current.map((order) =>
-        order.id === orderId ? { ...order, status } : order,
-      ),
-    );
-
-    setSelectedOrder((current) =>
-      current?.id === orderId ? { ...current, status } : current,
-    );
-  };
-  const token = localStorage.getItem("token");
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-  const fetchOrders = async () => {
-    const res = await getAllOrders(token);
+  const updateStatus = async (orderId, status) => {
+    const res = await updateOrderStatus(token, orderId, status);
     if (res) {
-      setOrders(res);
+      // status update successfully
+      alert("Status updated successfully");
+      fetchOrders();
+      setOrders((current) =>
+        current.map((order) =>
+          order.id === orderId ? { ...order, status } : order,
+        ),
+      );
+
+      setSelectedOrder((current) =>
+        current?.id === orderId ? { ...current, status } : current,
+      );
+    } else {
+      alert("Status not updated");
     }
   };
-
+  console.log(orders);
   return (
     <div className="space-y-7">
       {/* Heading */}
@@ -165,13 +108,13 @@ export default function AdminOrders() {
         />
         <SummaryCard
           label="Pending Orders"
-          value={orders.filter((o) => o.status === "Pending").length}
+          value={orders.filter((o) => o.status === "PENDING").length}
           icon={Clock}
           iconStyle="bg-amber-50 text-amber-600"
         />
         <SummaryCard
           label="Delivered"
-          value={orders.filter((o) => o.status === "Delivered").length}
+          value={orders.filter((o) => o.status === "DELIVERED").length}
           icon={CheckCircle2}
           iconStyle="bg-green-50 text-green-600"
         />
@@ -349,10 +292,10 @@ export default function AdminOrders() {
 
               <div>
                 <p className="text-sm text-gray-500">Delivery address</p>
-                <p className="mt-1 font-medium">{selectedOrder.address}</p>
+                <p className="mt-1 font-medium">{selectedOrder?.addressLine}</p>
               </div>
 
-              <div>
+              {/* <div>
                 <h4 className="mb-3 font-semibold">Items Ordered</h4>
 
                 {selectedOrder.items?.length > 0 ? (
@@ -380,12 +323,12 @@ export default function AdminOrders() {
                     No order items are available for this order.
                   </p>
                 )}
-              </div>
+              </div> */}
 
               <div className="flex justify-between border-t pt-4">
                 <span className="font-semibold">Order total</span>
                 <span className="text-lg font-bold text-green-700">
-                  {formatCurrency(selectedOrder.total)}
+                  {formatCurrency(selectedOrder.totalAmount)}
                 </span>
               </div>
 

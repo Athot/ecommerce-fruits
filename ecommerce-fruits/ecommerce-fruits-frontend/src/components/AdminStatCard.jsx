@@ -1,12 +1,6 @@
 import { TrendingUp } from "lucide-react";
 
-export default function StatCard({
-  title,
-  value,
-  change,
-  icon: Icon,
-  color = "red",
-}) {
+export default function StatCard({ title, value, icon: Icon, color = "red" }) {
   const styles = {
     red: "bg-red-50 text-red-600",
     orange: "bg-orange-50 text-orange-600",
@@ -27,12 +21,6 @@ export default function StatCard({
         <div className={`rounded-xl p-3 ${styles[color]}`}>
           <Icon size={23} />
         </div>
-      </div>
-
-      <div className="mt-5 flex items-center gap-1 text-xs text-green-600">
-        <TrendingUp size={15} />
-        <span className="font-semibold">{change}</span>
-        <span className="text-gray-400">from last month</span>
       </div>
     </div>
   );

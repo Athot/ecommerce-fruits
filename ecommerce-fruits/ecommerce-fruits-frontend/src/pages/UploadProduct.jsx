@@ -95,7 +95,6 @@ export default function UploadProduct() {
       images.forEach((img) => {
         formData.append("images", img);
       });
-      console.log("Product payload:", payload);
 
       const res = await uploadProduct(formData, token);
 
